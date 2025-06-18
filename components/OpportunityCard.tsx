@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { ArrowRight, TrendingUp } from 'lucide-react-native';
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native';
+import { ArrowRight, TrendingUp, X } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { ArbitrageOpportunity } from '@/types/arbitrage';
 import Colors from '@/constants/colors';
@@ -8,19 +8,31 @@ import Colors from '@/constants/colors';
 interface OpportunityCardProps {
   data: ArbitrageOpportunity;
   onPress?: () => void;
+  onRemove?: () => void;
+  showRemoveButton?: boolean;
 }
 
-export default function OpportunityCard({ data, onPress }: OpportunityCardProps) {
+export default function OpportunityCard({ 
+  data, 
+  onPress, 
+  onRemove, 
+  showRemoveButton = true 
+}: OpportunityCardProps) {
   const formattedDate = new Date(data.lastUpdated).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   });
 
+  const AnimatedView = Platform.OS !== 'web' ? Animated.View : View;
+  const animationProps = Platform.OS !== 'web' ? {
+    entering: FadeIn.duration(300),
+    exiting: FadeOut.duration(200)
+  } : {};
+
   return (
-    <Animated.View 
-      entering={FadeIn.duration(300)}
-      exiting={FadeOut.duration(200)}
+    <AnimatedView 
       style={styles.container}
+      {...animationProps}
     >
       <Pressable 
         style={({ pressed }) => [
@@ -29,6 +41,17 @@ export default function OpportunityCard({ data, onPress }: OpportunityCardProps)
         ]}
         onPress={onPress}
       >
+        {/* Remove Button */}
+        {showRemoveButton && onRemove && (
+          <Pressable 
+            style={styles.removeButton}
+            onPress={onRemove}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <X size={16} color={Colors.dark.textSecondary} />
+          </Pressable>
+        )}
+
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.coinInfo}>
@@ -68,7 +91,7 @@ export default function OpportunityCard({ data, onPress }: OpportunityCardProps)
           <Text style={styles.timestamp}>Last updated: {formattedDate}</Text>
         </View>
       </Pressable>
-    </Animated.View>
+    </AnimatedView>
   );
 }
 
@@ -79,25 +102,38 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.dark.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: Colors.dark.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    position: 'relative',
   },
   cardPressed: {
-    opacity: 0.9,
+    opacity: 0.95,
     transform: [{ scale: 0.98 }],
+  },
+  removeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   coinInfo: {
     flexDirection: 'row',
@@ -105,35 +141,36 @@ const styles = StyleSheet.create({
   },
   coinName: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginRight: 8,
+    marginRight: 10,
   },
   coinSymbol: {
     color: Colors.dark.textSecondary,
     fontSize: 16,
+    fontWeight: '500',
   },
   spreadContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   spreadIcon: {
-    marginRight: 4,
+    marginRight: 6,
   },
   spreadText: {
     color: Colors.dark.success,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 15,
   },
   arbitrageContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   exchangeContainer: {
     flex: 1,
@@ -142,13 +179,15 @@ const styles = StyleSheet.create({
   actionLabel: {
     color: Colors.dark.textSecondary,
     fontSize: 12,
-    marginBottom: 4,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   exchangeName: {
     color: Colors.dark.text,
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 4,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   buyPrice: {
     color: Colors.dark.success,
@@ -161,16 +200,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   arrowContainer: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: Colors.dark.border,
-    paddingTop: 12,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    paddingTop: 16,
   },
   timestamp: {
     color: Colors.dark.textSecondary,
     fontSize: 12,
     textAlign: 'right',
+    fontWeight: '500',
   },
 });
