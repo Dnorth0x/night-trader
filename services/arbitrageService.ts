@@ -40,6 +40,12 @@ const MOCK_OPPORTUNITIES: Record<string, ArbitrageOpportunity> = {
 // Supported exchanges for filtering
 const SUPPORTED_EXCHANGES = ['Binance', 'Coinbase', 'Kraken', 'KuCoin', 'Bitstamp'];
 
+// Type for price data
+interface PriceData {
+  exchange: string;
+  price: number;
+}
+
 export class ArbitrageError extends Error {
   constructor(message: string, public code: string) {
     super(message);
@@ -124,10 +130,10 @@ export async function fetchArbitrageOpportunity(coinId: string): Promise<Arbitra
     }
     
     // Find best buy and sell opportunities
-    const prices = supportedTickers.map((ticker: any) => ({
+    const prices: PriceData[] = supportedTickers.map((ticker: any) => ({
       exchange: ticker.market.name,
       price: ticker.last || ticker.converted_last?.usd || 0
-    })).filter(p => p.price > 0);
+    })).filter((p: PriceData) => p.price > 0);
     
     if (prices.length < 2) {
       throw new ArbitrageError(
@@ -136,7 +142,7 @@ export async function fetchArbitrageOpportunity(coinId: string): Promise<Arbitra
       );
     }
     
-    const sortedPrices = prices.sort((a, b) => a.price - b.price);
+    const sortedPrices = prices.sort((a: PriceData, b: PriceData) => a.price - b.price);
     const buyTarget = sortedPrices[0];
     const sellTarget = sortedPrices[sortedPrices.length - 1];
     
